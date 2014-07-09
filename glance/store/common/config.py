@@ -27,7 +27,9 @@ import os
 from oslo.config import cfg
 from paste import deploy
 
-from glance.version import version_info as version
+# from glance.version import version_info as version
+from glance.openstack.common.gettextutils import _
+
 
 paste_deploy_opts = [
     cfg.StrOpt('flavor',
@@ -128,7 +130,7 @@ CONF.register_opts(common_opts)
 def parse_args(args=None, usage=None, default_config_files=None):
     CONF(args=args,
          project='glance',
-         version=version.cached_version_string(),
+         # version=version.cached_version_string(),
          usage=usage,
          default_config_files=default_config_files)
 

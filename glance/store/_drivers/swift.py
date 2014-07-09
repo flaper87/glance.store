@@ -29,6 +29,7 @@ from oslo.config import cfg
 from glance.common import auth
 from glance.common import exception
 from glance.openstack.common import excutils
+from glance.openstack.common.gettextutils import _
 import glance.store
 import glance.store.driver
 import glance.store.location
@@ -180,7 +181,7 @@ class StoreLocation(glance.store.location.StoreLocation):
                        "swift+http:// scheme, like so: "
                        "swift+http://user:pass@authurl.com/v1/container/obj")
             LOG.debug(_("Invalid store URI: %(reason)s"), {'reason': reason})
-            raise exceptions.BadStoreUri(message=reason)
+            raise exception.BadStoreUri(message=reason)
 
         pieces = urlparse.urlparse(uri)
         assert pieces.scheme in ('swift', 'swift+http', 'swift+https')
@@ -207,7 +208,7 @@ class StoreLocation(glance.store.location.StoreLocation):
             if len(cred_parts) != 2:
                 reason = (_("Badly formed credentials in Swift URI."))
                 LOG.debug(reason)
-                raise exceptions.BadStoreUri()
+                raise exception.BadStoreUri()
             user, key = cred_parts
             self.user = urllib.unquote(user)
             self.key = urllib.unquote(key)
@@ -225,7 +226,7 @@ class StoreLocation(glance.store.location.StoreLocation):
         except IndexError:
             reason = _("Badly formed Swift URI.")
             LOG.debug(reason)
-            raise exceptions.BadStoreUri()
+            raise exception.BadStoreUri()
 
     @property
     def swift_url(self):
@@ -286,7 +287,7 @@ class BaseStore(glance.store.driver.Store):
             if e.http_status == httplib.NOT_FOUND:
                 msg = _("Swift could not find object %s.") % location.obj
                 LOG.warn(msg)
-                raise exceptions.NotFound(msg)
+                raise exception.NotFound(msg)
             else:
                 raise
 
@@ -317,7 +318,7 @@ class BaseStore(glance.store.driver.Store):
             reason = (_("Could not find %(param)s in configuration "
                         "options.") % {'param': param})
             LOG.error(reason)
-            raise exceptions.BadStoreConfiguration(store_name="swift",
+            raise exception.BadStoreConfiguration(store_name="swift",
                                                   reason=reason)
         return result
 
@@ -444,7 +445,7 @@ class BaseStore(glance.store.driver.Store):
             return (location.get_uri(), image_size, obj_etag, {})
         except swiftclient.ClientException as e:
             if e.http_status == httplib.CONFLICT:
-                raise exceptions.Duplicate(_("Swift already has an image at "
+                raise exception.Duplicate(_("Swift already has an image at "
                                             "this location"))
             msg = (_("Failed to add object to Swift.\n"
                      "Got error from Swift: %(e)s") % {'e': e})
@@ -488,7 +489,7 @@ class BaseStore(glance.store.driver.Store):
         except swiftclient.ClientException as e:
             if e.http_status == httplib.NOT_FOUND:
                 msg = _("Swift could not find image at URI.")
-                raise exceptions.NotFound(msg)
+                raise exception.NotFound(msg)
             else:
                 raise
 
@@ -558,7 +559,7 @@ class SingleTenantStore(BaseStore):
         if not location.user:
             reason = (_("Location is missing user:password information."))
             LOG.debug(reason)
-            raise exceptions.BadStoreUri(message=reason)
+            raise exception.BadStoreUri(message=reason)
 
         auth_url = location.swift_url
         if not auth_url.endswith('/'):
@@ -571,7 +572,7 @@ class SingleTenantStore(BaseStore):
                 reason = (_("Badly formed tenant:user '%(user)s' in "
                             "Swift URI") % {'user': location.user})
                 LOG.debug(reason)
-                raise exceptions.BadStoreUri()
+                raise exception.BadStoreUri()
         else:
             tenant_name = None
             user = location.user
@@ -596,12 +597,12 @@ class MultiTenantStore(BaseStore):
         self.container = CONF.swift_store_container
         if self.context is None:
             reason = _("Multi-tenant Swift storage requires a context.")
-            raise exceptions.BadStoreConfiguration(store_name="swift",
+            raise exception.BadStoreConfiguration(store_name="swift",
                                                   reason=reason)
         if self.context.service_catalog is None:
             reason = _("Multi-tenant Swift storage requires "
                        "a service catalog.")
-            raise exceptions.BadStoreConfiguration(store_name="swift",
+            raise exception.BadStoreConfiguration(store_name="swift",
                                                   reason=reason)
         self.storage_url = auth.get_endpoint(
             self.context.service_catalog, service_type=self.service_type,
@@ -649,7 +650,7 @@ class MultiTenantStore(BaseStore):
         except swiftclient.ClientException as e:
             if e.http_status == httplib.NOT_FOUND:
                 msg = _("Swift could not find image at URI.")
-                raise exceptions.NotFound(msg)
+                raise exception.NotFound(msg)
             else:
                 raise
 

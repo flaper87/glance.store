@@ -29,13 +29,13 @@ import swiftclient
 from glance.store import exceptions
 from glance.store.location import get_location_from_uri
 from glance.store._drivers import swift
-from glance.tests.unit import base
+from tests.unit import base
 
 CONF = cfg.CONF
 
 FAKE_UUID = lambda: str(uuid.uuid4())
 
-Store = glance.store.swift.Store
+Store = swift.Store
 FIVE_KB = 5 * 1024
 FIVE_GB = 5 * 1024 * 3
 MAX_SWIFT_OBJECT_SIZE = FIVE_GB
@@ -956,7 +956,7 @@ class TestChunkReader(base.StoreClearingUnitTest):
         infile = open(data_file.name, 'rb')
         bytes_read = 0
         while True:
-            cr = glance.store.swift.ChunkReader(infile, checksum, CHUNKSIZE)
+            cr = swift.ChunkReader(infile, checksum, CHUNKSIZE)
             chunk = cr.read(CHUNKSIZE)
             bytes_read += len(chunk)
             if not chunk:
